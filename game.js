@@ -7,6 +7,8 @@ const RED = "#FF0000";
 const DARKRED = "#AA0000";
 const GREEN = "#00FF00";
 const BLUE = "#0000FF";
+const YELLOW = "#FFFF00";
+const ORANGE = "#FF7000";
 
 // Declaration of the width and height of the player
 const HEIGHT_PLAYER = 10;
@@ -24,8 +26,8 @@ let playerXpos = 240;
 let playerSpeed = -30;
 
 // Declaration of the coordinates and the speed of the ball
-let circleXPos = 100;
-let circleYPos = 75;
+let circleXPos = 200;
+let circleYPos = 275;
 let circleRadius = 10;
 let circleSpeedX = 5;
 let circleSpeedY = 5;
@@ -33,66 +35,10 @@ let circleSpeedY = 5;
 let numberBlockCollision = 3;
 let blockWidth = 60;
 let blockHeight = 20;
-
-// Declaration of blocks
-let block = [
-    [
-    {x: canvas.width/2.25, y: 50},
-    {x: canvas.width/2.25, y: 70},
-    {x: canvas.width/2.25, y: 90},
-    {x: canvas.width/2.25, y: 110},
-    {x: canvas.width/2.25, y: 130},
-    {x: canvas.width/2.25, y: 150},
-    ],
-    [
-    {x: canvas.width/1.85, y: 50},
-    {x: canvas.width/1.85, y: 70},
-    {x: canvas.width/1.85, y: 90},
-    {x: canvas.width/1.85, y: 110},
-    {x: canvas.width/1.85, y: 130},
-    {x: canvas.width/1.85, y: 150},
-    ],
-    [
-    {x: canvas.width/1.56, y: 50},
-    {x: canvas.width/1.56, y: 70},
-    {x: canvas.width/1.56, y: 90},
-    {x: canvas.width/1.56, y: 110},
-    {x: canvas.width/1.56, y: 130},
-    {x: canvas.width/1.56, y: 150},
-    ],
-    [
-    {x: canvas.width/1.35, y: 50},
-    {x: canvas.width/1.35, y: 70},
-    {x: canvas.width/1.35, y: 90},
-    {x: canvas.width/1.35, y: 110},
-    {x: canvas.width/1.35, y: 130},
-    {x: canvas.width/1.35, y: 150},
-    ],
-    [
-    {x: canvas.width/1.19, y: 50},
-    {x: canvas.width/1.19, y: 70},
-    {x: canvas.width/1.19, y: 90},
-    {x: canvas.width/1.19, y: 110},
-    {x: canvas.width/1.19, y: 130},
-    {x: canvas.width/1.19, y: 150},
-    ],
-    [
-    {x: canvas.width/2.90, y: 50},
-    {x: canvas.width/2.90, y: 70},
-    {x: canvas.width/2.90, y: 90},
-    {x: canvas.width/2.90, y: 110},
-    {x: canvas.width/2.90, y: 130},
-    {x: canvas.width/2.90, y: 150},
-    ],
-    [
-    {x: canvas.width/4.09, y: 50},
-    {x: canvas.width/4.09, y: 70},
-    {x: canvas.width/4.09, y: 90},
-    {x: canvas.width/4.09, y: 110},
-    {x: canvas.width/4.09, y: 130},
-    {x: canvas.width/4.09, y: 150},
-    ]
-];
+let firstBlockCoordX = LEFT;
+let firstBlockCoordY = TOP + 10;
+let rows = 2;
+let columns = Math.floor(Math.random() * (7 - 1)) + 1;
 
 // Main Game loop, with an interval of time implemented with a setTimeout function
 function main() {
@@ -100,9 +46,9 @@ function main() {
     //Drawing the canvas window
     clearCanvas(LEFT,TOP,canvas.width,canvas.height);
     checkAllCollision();
-    changeBlockColors();
-    drawAllBlock();
+    drawAllBlocks();
     startingCount = 0;
+    setColors(BLACK,GREEN);
     drawRect(playerXpos,initialPlayerYpos,WIDTH_PLAYER,HEIGHT_PLAYER);
     drawCircle(circleXPos,circleYPos,circleRadius,0,2*Math.PI);
     moveCircle(circleSpeedX, circleSpeedY);
@@ -157,19 +103,36 @@ function drawCircle(xPos,yPos,radius,startingAngle,endingAngle) {
     context.fill();
 }
 
-function drawSingleBlock(singleBlock) {
-    setColors(BLACK,GREEN);
-    // Do the coloring every 20 pixels
-    drawRect(singleBlock.x, singleBlock.y, blockWidth, blockHeight)
-    }
-
-function drawAllBlock() {
-    let i = 0;
-    while (i < 7) {
-    block[i].forEach(drawSingleBlock);
-    i+=1;
+function drawAllBlocks() {
+    // Draw all the blocks, vertically first and then horizontally
+    for (var x = 0; x < canvas.width;x+= (canvas.width/12)+15){
+        for (var y = 0; y < canvas.height/3;y+= (canvas.height/24)+5){
+            // Check how often the block has collide with the ball 
+            // and change the drawing colors accordingly, then draw the block
+            if (numberBlockCollision === 3) {
+                setColors(BLACK,GREEN);
+                drawRect(x,y,blockWidth,blockHeight);
+            }
+            else if (numberBlockCollision === 2) {
+                setColors(BLACK,YELLOW);
+                drawRect(x,y,blockWidth,blockHeight);
+            }
+            else if (numberBlockCollision === 1.5) {
+                setColors(BLACK,ORANGE);
+                drawRect(x,y,blockWidth,blockHeight);
+            }
+            else if (numberBlockCollision === 0.5) {
+                setColors(BLACK,RED);
+                drawRect(x,y,blockWidth,blockHeight);
+            }
+            else if (numberBlockCollision <= 0) {
+                setColors(WHITE,WHITE);
+                drawRect(x,y,blockWidth,blockHeight);
+            }
+        }
     }
 }
+
 ////////// END DRAWING FUNCTIONS  //////////
 
 ////////// COLLISION FUNCTIONS  //////////
@@ -206,18 +169,21 @@ function checkPlayerCollision() {
 
 function checkBlockCollision() {
 
-    for (let y = 0; y < 7; y++) {
-        if (block[y].x < circleXPos + circleRadius &&
-        block[y].x + blockWidth > circleXPos &&
-        block[y].y < circleYPos + circleRadius &&
-        blockHeight + block[y].y > circleYPos){
-            circleSpeedY = 10;
-            circleSpeedX = 5;
-            numberBlockCollision -= 1;
-            console.log(numberBlockCollision);
+    for (var x = 0; x < canvas.width;x+= (canvas.width/12)+5){
+        for (var y = 0; y < canvas.height/3;y+= (canvas.height/24)+2){
+            if (x < circleXPos + circleRadius &&
+            x + blockWidth > circleXPos &&
+            y < circleYPos + circleRadius &&
+            blockHeight + y > circleYPos && numberBlockCollision > 0){
+                circleSpeedY = 10;
+                circleSpeedX = 5;
+                drawRect(x,y,blockWidth, blockHeight);
+                numberBlockCollision -= 0.5;
             }
         }
+        
     }
+}
 ////////// END COLLISION FUNCTIONS  //////////
 
 function movePlayer(speed) {
@@ -229,20 +195,6 @@ function moveCircle(speedX, speedY) {
     circleYPos += speedY;
 }
 
-function changeBlockColors() {
-    if (numberBlockCollision === 3) {
-        setColors(BLACK,GREEN);
-    }
-    else if (numberBlockCollision === 2) {
-        setColors(BLACK,RED);
-    }
-    else if (numberBlockCollision === 1) {
-        setColors(BLACK,DARKRED)
-    }
-    else if (numberBlockCollision <= 0) {
-        setColors(WHITE,WHITE)
-    }
-}
 
 // Creating keyboard events with the Char codes of the keyboard
 document.onkeydown = function(e) {
