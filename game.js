@@ -67,7 +67,7 @@ function menu() {
     setColors(BLACK,WHITE);
     drawRect(LEFT,TOP,canvas.width,canvas.height);
     drawRect(canvas.width/4, canvas.height/5, 350,200);
-    write('Press X','for starting Breakout');
+    write('Click','for starting Breakout');
 }
 
 // Function used for writing messages on the screen menu
@@ -75,11 +75,11 @@ function write(text1,text2) {
     if( typeof(text2) == 'undefined' ){
 		text2 = null;
 	}
-    context.font = '40px serif';
+    context.font = '80px serif';
     setColors(BLACK, BLACK);
-    context.fillText(text1, canvas.width/4, canvas.height/2);
+    context.fillText(text1, canvas.width/3, canvas.height/2);
     context.font = '30px serif';
-    context.fillText(text2, canvas.width/4, canvas.height/1.6);
+    context.fillText(text2, canvas.width/3.7, canvas.height/1.6);
 }
 
 // This function "clean" the canvas by drawing a white rectangle on the canvas.
@@ -215,6 +215,9 @@ function moveCircle(speedX, speedY) {
 }
 ////////// END DEPLACEMENT FUNCTIONS  //////////
 
+document.getElementById("canvas").addEventListener("click", function( event ) {
+    main();
+  }, {once : true});
 // Creating keyboard events with the Char codes of the keyboard
 document.onkeydown = function(e) {
     switch (e.keyCode) {
@@ -264,4 +267,4 @@ document.onkeydown = function(e) {
 };
 
 // Launch the game
-main()
+menu()
