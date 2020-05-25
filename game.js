@@ -15,51 +15,61 @@ let context = canvas.getContext('2d');
 let startingCount = 1;
 let timeInterval = 10;
 
+let game_over = false;
+
 // Declaration of the width and height of the player
-const HEIGHT_PLAYER = 10;
-const WIDTH_PLAYER = canvas.width/2;
+const HEIGHT_PLAYER = canvas.height/40;
+var WIDTH_PLAYER = canvas.width/5;
+
 
 // Declaration of the coordinates and the speed of the player
-let initialPlayerYpos = 400;
+let initialPlayerYpos = 550;
 let playerXpos = 240;
-let playerSpeed = -30;
+let playerSpeed = -20;
 let playerCollision = true;
 
 // Declaration of the coordinates and the speed of the ball
 let circleXPos = 200;
-let circleYPos = 275;
-let circleRadius = 10;
-let circleSpeedX = 25;
-let circleSpeedY = 25;
+let circleYPos = 475;
+let circleRadius = 8;
+let circleSpeedX = 6;
+let circleSpeedY = 6;
 
 // Declaration of the variables of the blocks
-let numberBlockCollision = 3;
-let blockWidth = 60;
-let blockHeight = 20;
-let firstBlockCoordX = LEFT;
-let firstBlockCoordY = TOP + 10;
-let allBlocks = [
-                    [{x:75*0,y:22.91*1},{x:75*0,y:22.91*2},{x:75*0,y:22.91*3}],
-                    [{x:75*1,y:22.91*1},{x:75*1,y:22.91*2},{x:75*1,y:22.91*3}],
-                    [{x:75*2,y:22.91*1},{x:75*2,y:22.91*2},{x:75*2,y:22.91*3}],
-                    [{x:75*3,y:22.91*1},{x:75*3,y:22.91*2},{x:75*3,y:22.91*3}],
-                    [{x:75*4,y:22.91*1},{x:75*4,y:22.91*2},{x:75*4,y:22.91*3}],
-                    [{x:75*5,y:22.91*1},{x:75*5,y:22.91*2},{x:75*5,y:22.91*3}],
-                    [{x:75*6,y:22.91*1},{x:75*6,y:22.91*2},{x:75*6,y:22.91*3}],
-                    [{x:75*7,y:22.91*1},{x:75*7,y:22.91*2},{x:75*7,y:22.91*3}],
-                ];
+let blockColumns = 12
+let blockRows = 6
+let blockGap = 40
+let blockWidth = 40;
+let blockHeight = 30;
+let blockOffsetTop = 50;
+let blockOffsetLeft = 30;
+
+var blocks = [];
+
+var score = 0;
+var nb_blocks = blockRows* blockColumns;
+// Creating the coordinates of the blocks and putting them in a 2D array
+for (let i = 0;i<blockColumns;i++) {
+    blocks[i] = [];
+    for (let j = 0;j< blockRows;j++) {
+        blocks[i][j] = {x:0,y:0,touched:false};
+    }
+}
 
 // Main Game loop, with an interval of time implemented with a setTimeout function
 function main() {
+    write('Score  : '+ score.toString(10),canvas.width/3,canvas.height/15);
+    write('Briques  : '+ nb_blocks.toString(10),canvas.width/1.6,canvas.height/15);
     startingCount = 0;
-	setTimeout(function onTick(timeInterval) {
+	// setTimeout(function onTick(timeInterval) {
     clearCanvas(LEFT,TOP,canvas.width,canvas.height);
-    drawAllGameElements();
     checkAllCollision();
+    drawAllGameElements();
     moveCircle(circleSpeedX, circleSpeedY);
     // Call main again
-    main();
-    }, timeInterval)
+    // main();
+    // }, timeInterval)
+    requestAnimationFrame(main);
   }
 
 // Display the menu on the canvas, pressing X will start the game
@@ -67,19 +77,15 @@ function menu() {
     setColors(BLACK,WHITE);
     drawRect(LEFT,TOP,canvas.width,canvas.height);
     drawRect(canvas.width/4, canvas.height/5, 350,200);
-    write('Click','for starting Breakout');
+    write('Click',canvas.width/3,canvas.height/2);
+    write('for starting Breakout',canvas.width/3.7, canvas.height/1.6);
 }
 
 // Function used for writing messages on the screen menu
-function write(text1,text2) {
-    if( typeof(text2) == 'undefined' ){
-		text2 = null;
-	}
-    context.font = '80px serif';
-    setColors(BLACK, BLACK);
-    context.fillText(text1, canvas.width/3, canvas.height/2);
+function write(text,x,y) {
     context.font = '30px serif';
-    context.fillText(text2, canvas.width/3.7, canvas.height/1.6);
+    setColors(BLACK, BLACK);
+    context.fillText(text, x, y);
 }
 
 // This function "clean" the canvas by drawing a white rectangle on the canvas.
@@ -113,24 +119,22 @@ function drawCircle(xPos,yPos,radius,startingAngle,endingAngle) {
 
 // Draw all the blocks
 function drawAllBlocks() {
-    // Draw all the blocks, vertically first and then horizontally
-    for (var x = 0; x < allBlocks.length; x++){
-        for (var y = 0; y < allBlocks[0].length; y++){
-            // Check how often the block has collide with the ball 
-            // and change the drawing colors accordingly, then draw the block
-            switch (numberBlockCollision) {
-                case 3:
-                    setColors(BLACK,GREEN);
-                    drawRect(allBlocks[x][y].x,allBlocks[x][y].y,blockWidth,blockHeight);
-                    break;
-                default:
-                    setColors(BLACK,BLACK);
-                    drawRect(allBlocks[x][y].x,allBlocks[x][y].y,blockWidth,blockHeight);
-                    break;
-                    }
-                }
+    for (var i=0;i<blockColumns;i++) {
+        for (var j=0;j<blockRows;j++) {
+            var blockX = (i*(blockRows+blockGap))+ blockOffsetLeft;
+            var blockY = (j*(blockColumns+blockGap))+ blockOffsetTop;
+            if (blocks[i][j].touched === false) {
+                blocks[i][j].x = blockX;
+                blocks[i][j].y = blockY;
+                context.beginPath();
+                context.rect(blockX, blockY, blockWidth, blockHeight);
+                context.fillStyle = GREEN;
+                context.fill();
+                context.closePath();
             }
         }
+    }
+}
 
 // Regroup all the drawing functions under this one
 function drawAllGameElements() {
@@ -143,53 +147,69 @@ function drawAllGameElements() {
 ////////// COLLISION FUNCTIONS  //////////
 
 // Check if the ball hit a wall
+
 function checkWallCollision() {
-    if (circleXPos === 0) {
+    // Si la balle touche le bord gauche
+    if (circleXPos < 0) {
+        circleXPos = 0
         circleSpeedX = -circleSpeedX;
     }
-    if (circleXPos === canvas.width) {
+    // Si la balle touche le bord droit
+    if (circleXPos - circleRadius > canvas.width) {
+        circleXPos = canvas.width - circleRadius;
         circleSpeedX = -circleSpeedX;
     }
+    // Si la balle touche le bord haut
     if (circleYPos < 0) {
-        circleSpeedY = 5;
+        circleYPos = 0;
+        circleSpeedY = - circleSpeedY;
     }
-    if (circleYPos > canvas.height) {
-        circleSpeedY = -5;
+    // Si la balle touche le bord bas
+    if (circleYPos > canvas.height - circleRadius) {
+        circleYPos = canvas.height- circleRadius;
+        circleSpeedX = 0;
+        game_over = true;
     }
 }
 
 // Check if the ball hit the cursor
 function checkPlayerCollision() {
+    
     if (playerXpos < circleXPos + circleRadius &&
         playerXpos + WIDTH_PLAYER > circleXPos &&
         initialPlayerYpos < circleYPos + circleRadius &&
         HEIGHT_PLAYER + initialPlayerYpos > circleYPos && playerCollision === true){
-            circleSpeedY = -5;
-            circleSpeedX = -5;
+            circleSpeedY = -circleSpeedY;
+            circleSpeedX = -circleSpeedX;
             playerCollision = false;
+            console.log(0);
         }
         else if (playerXpos < circleXPos + circleRadius &&
         playerXpos + WIDTH_PLAYER > circleXPos &&
         initialPlayerYpos < circleYPos + circleRadius &&
         HEIGHT_PLAYER + initialPlayerYpos > circleYPos && playerCollision === false){
-            circleSpeedY = -5;
-            circleSpeedX = 5;
+            circleSpeedY = -circleSpeedY;
+            circleSpeedX = circleSpeedX;
             playerCollision = true;
+            console.log("touché");
         }
     }
     
 // Check if the ball hit on of the blocks
 function checkBlockCollision() {
-    for (var x = 0; x < allBlocks.length; x++){
-        for (var y = 0; y < allBlocks[x].length; y++){
-            if (allBlocks[x][y].x < circleXPos + circleRadius &&
-            allBlocks[x][y].x + blockWidth > circleXPos &&
-            allBlocks[x][y].y < circleYPos + circleRadius &&
-            blockHeight + y > circleYPos && numberBlockCollision > 0){
-                circleSpeedY = 10;
-                circleSpeedX = 5;
-                allBlocks[x][y].y = -30;
-                allBlocks[x][y].x = -300;
+    for (var c = 0; c < blockColumns; c++){
+        for (var r = 0; r < blockRows; r++){
+            if (blocks[c][r].touched === false) {
+                if (circleXPos > blocks[c][r].x && circleXPos < blocks[c][r].x + blockWidth && circleYPos > blocks[c][r].y && circleYPos < blocks[c][r].y + blockHeight) {
+                    circleSpeedX = - circleSpeedX;
+                    circleSpeedY = - circleSpeedY;
+                    blocks[c][r].touched = true;
+                    score+=1;
+                    nb_blocks-=1;
+                    if(score === blockColumns*blockRows) {
+                        alert("Gagné");
+                    }
+                }
             }
         }
     }
@@ -218,51 +238,43 @@ function moveCircle(speedX, speedY) {
 document.getElementById("canvas").addEventListener("click", function( event ) {
     main();
   }, {once : true});
+
 // Creating keyboard events with the Char codes of the keyboard
 document.onkeydown = function(e) {
     switch (e.keyCode) {
-        // Pressing X for starting the game
+        // Pressing X for displaying infos
         case 88:
-            // Check if the game is  not already started before starting it
-            if (startingCount === 1) {
-            clearCanvas(TOP, LEFT,canvas.width,canvas.height);
-            main();
+            if (game_over == true) {
+                document.location.reload();
+                clearInterval(interval);
             }
-            break;
-        // Pressing L
-        case 76:
-            console.log(allBlocks);
-            break;
-        // Pressing S
-        case 83:
-            numberBlockCollision -= 1;
+            else {
+                playerXpos = 0;
+                WIDTH_PLAYER = canvas.width;
+                // let data_display = document.querySelector(".data_display");
+                // data_content = document.createTextNode(blocks[11][6].x);
+                // data_display.appendChild(data_content);
+            }
             break;
 
     // Keyboard keys for changing the direction of the player
-
         //Left arrow
         case 37:
-            if (playerXpos > 0) {
-            movePlayer(165);
+            movePlayer(30);
+            if (playerXpos < 0) {
+                playerXpos = 0;
             }
             else {
                 movePlayer(0);
             }
-            break;
-        //Up arrow
-        case 38:
             break;
         //Right arrow
         case 39:
-            if (playerXpos <= canvas.width - WIDTH_PLAYER) {
-            movePlayer(-165);
-            }
-            else {
-                movePlayer(0);
+            movePlayer(-30);
+            if (playerXpos +  WIDTH_PLAYER > canvas.width) {
+                playerXpos = canvas.width - WIDTH_PLAYER;
             }
             break;
-        //Down arrow
-        case 40:
     }
 };
 
