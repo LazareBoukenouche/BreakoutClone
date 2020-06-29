@@ -49,21 +49,23 @@ var WIDTH_PLAYER = canvas.width/5;
 
 // Declaration of the coordinates and the speed of the player
 let initialPlayerYpos = 550;
-let playerXpos = 240;
+let playerXPos = 240;
 let playerSpeed = -20;
 let playerCollision = true;
-let playerCenter = playerXpos + WIDTH_PLAYER/2;
+let playerCenter = playerXPos + WIDTH_PLAYER/2;
 let playerLeft = playerCenter - 50;
 let playerRight = playerCenter +50;
 
 let arrowLeft = false;
 let arrowRight = false;
+
 // Declaration of the coordinates and the speed of the ball
 let circleXPos = 200;
 let circleYPos = 475;
 let circleRadius = 8;
 let circleSpeedX = 4;
 let circleSpeedY = 4;
+let circleSpeed = 4;
 
 // Declaration of the variables of the blocks
 let blockColumns = 17;
@@ -170,7 +172,7 @@ function drawAllBlocks() {
 // Regroup all the drawing functions under this one
 function drawAllGameElements() {
     drawAllBlocks();
-    drawRect(playerXpos,initialPlayerYpos,WIDTH_PLAYER,HEIGHT_PLAYER);
+    drawRect(playerXPos,initialPlayerYpos,WIDTH_PLAYER,HEIGHT_PLAYER);
     drawCircle(circleXPos,circleYPos,circleRadius,0,2*Math.PI);
 }
 ////////// END DRAWING FUNCTIONS  //////////
@@ -206,9 +208,13 @@ function checkWallCollision() {
 // Check if the ball hit the cursor
 function checkPlayerCollision() {
     
-    if (playerXpos < circleXPos + circleRadius && playerXpos + WIDTH_PLAYER > circleXPos && initialPlayerYpos < circleYPos + circleRadius && HEIGHT_PLAYER + initialPlayerYpos > circleYPos && playerCollision === true){
-            circleSpeedY = -circleSpeedY;
-            circleSpeedX = -circleSpeedX;
+    if (circleYPos > initialPlayerYpos && circleYPos < initialPlayerYpos + HEIGHT_PLAYER && circleXPos > playerXPos && circleXPos < playerXPos + WIDTH_PLAYER){
+    
+    let collidePoint = circleXPos - (playerXPos + WIDTH_PLAYER/2);
+    collidePoint = collidePoint / (WIDTH_PLAYER/2);
+    let angle = collidePoint * (Math.PI/3);
+    circleSpeedX = circleSpeed * Math.sin(angle);
+    circleSpeedY = - circleSpeed * Math.cos(angle);
         }
     }
     
@@ -217,9 +223,12 @@ function checkBlockCollision() {
     for (var c = 0; c < blockColumns; c++){
         for (var r = 0; r < blockRows; r++){
             if (blocks[c][r].touched === false) {
-                if (circleXPos > blocks[c][r].x && circleXPos < blocks[c][r].x + blockWidth && circleYPos > blocks[c][r].y && circleYPos < blocks[c][r].y + blockHeight) {
-                    circleSpeedX = - circleSpeedX;
-                    circleSpeedY = - circleSpeedY;
+                if (circleYPos > blocks[c][r].y && circleYPos < blocks[c][r].y + blockHeight && circleXPos > blocks[c][r].x && circleXPos < blocks[c][r].x + blockWidth) {
+                    let collidePoint = circleXPos - (playerXPos + WIDTH_PLAYER/2);
+		    collidePoint = collidePoint / (WIDTH_PLAYER/2);
+		    let angle = collidePoint * (Math.PI/3);
+		    circleSpeedX = circleSpeed * Math.sin(angle);
+		    circleSpeedY = - circleSpeedY;
                     blocks[c][r].touched = true;
                     score+=1;
                     nb_blocks-=1;
@@ -243,7 +252,7 @@ function checkAllCollision() {
 
 ////////// DEPLACEMENT FUNCTIONS  //////////
 function movePlayer(speed) {
-    playerXpos = playerXpos - speed;
+    playerXPos = playerXPos - speed;
     playerCenter = playerCenter - speed;
 }
 
@@ -282,8 +291,8 @@ document.onkeydown = function(e) {
             if (arrowLeft === true) {
                 movePlayer(30);
             }
-            if (playerXpos < 0) {
-                playerXpos = 0;
+            if (playerXPos < 0) {
+                playerXPos = 0;
             }
             else {
                 movePlayer(0);
@@ -295,8 +304,8 @@ document.onkeydown = function(e) {
             if (arrowRight === true) {
                 movePlayer(-30);
             }
-            if (playerXpos +  WIDTH_PLAYER > canvas.width) {
-                playerXpos = canvas.width - WIDTH_PLAYER;
+            if (playerXPos +  WIDTH_PLAYER > canvas.width) {
+                playerXPos = canvas.width - WIDTH_PLAYER;
             }
             break;
     }
