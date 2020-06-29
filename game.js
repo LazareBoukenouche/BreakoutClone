@@ -55,6 +55,7 @@ let playerCollision = true;
 let playerCenter = playerXPos + WIDTH_PLAYER/2;
 let playerLeft = playerCenter - 50;
 let playerRight = playerCenter +50;
+let speed = 10;
 
 let arrowLeft = false;
 let arrowRight = false;
@@ -97,11 +98,14 @@ function main() {
     clearCanvas(LEFT,TOP,canvas.width,canvas.height);
     checkAllCollision();
     drawAllGameElements();
+    movePlayer();
     moveCircle(circleSpeedX, circleSpeedY);
     // Call main again
     // main();
     // }, timeInterval)
-    requestAnimationFrame(main);
+    if (!game_over) {
+    	requestAnimationFrame(main);
+    	}
   }
 
 // Display the menu on the canvas, pressing X will start the game
@@ -241,6 +245,7 @@ function checkBlockCollision() {
     }
 }
 
+
 // Regroup all the collison functions under this one
 function checkAllCollision() {
     checkWallCollision();
@@ -251,9 +256,13 @@ function checkAllCollision() {
 ////////// END COLLISION FUNCTIONS  //////////
 
 ////////// DEPLACEMENT FUNCTIONS  //////////
-function movePlayer(speed) {
-    playerXPos = playerXPos - speed;
-    playerCenter = playerCenter - speed;
+function movePlayer() {
+    if (arrowRight && playerXPos + WIDTH_PLAYER < canvas.width) {
+    	playerXPos += speed;
+    }
+    else if (arrowLeft && playerXPos > 0) {
+    	playerXPos -= speed;
+    }
 }
 
 function moveCircle(speedX, speedY) {
@@ -288,22 +297,13 @@ document.onkeydown = function(e) {
         //Left arrow
         case 37:
             arrowLeft = true;
-            if (arrowLeft === true) {
-                movePlayer(30);
-            }
             if (playerXPos < 0) {
                 playerXPos = 0;
-            }
-            else {
-                movePlayer(0);
             }
             break;
         //Right arrow
         case 39:
             arrowRight = true;
-            if (arrowRight === true) {
-                movePlayer(-30);
-            }
             if (playerXPos +  WIDTH_PLAYER > canvas.width) {
                 playerXPos = canvas.width - WIDTH_PLAYER;
             }
