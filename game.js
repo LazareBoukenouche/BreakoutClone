@@ -1,4 +1,5 @@
 // Colors constantes declaration
+
 const TOP = 0;
 const LEFT = 0;
 const BLACK = "#000000";
@@ -7,7 +8,31 @@ const RED = "#FF0000";
 const GREEN = "#00FF00";
 const BLUE = "#0000FF";
 const YELLOW = "#FFFF00";
+const YELLOWGREEN = "#AAFF00";
+const REDORANGE = "#FFAA00";
 const ORANGE = "#FF7000";
+const COLORS = [RED,ORANGE,REDORANGE,YELLOW,YELLOWGREEN,GREEN];
+
+function sound(src) {
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
+    this.play = function(){
+      this.sound.play();
+    }
+    this.stop = function(){
+      this.sound.pause();
+    }
+  }
+
+// how to play sound
+// var music;
+// music = new sound("/static/sound/music.mp3");
+// music.play();
+// music.stop();
 
 // Create the canvas window, where the game will be played.
 let canvas = document.getElementById('canvas');
@@ -27,22 +52,27 @@ let initialPlayerYpos = 550;
 let playerXpos = 240;
 let playerSpeed = -20;
 let playerCollision = true;
+let playerCenter = playerXpos + WIDTH_PLAYER/2;
+let playerLeft = playerCenter - 50;
+let playerRight = playerCenter +50;
 
+let arrowLeft = false;
+let arrowRight = false;
 // Declaration of the coordinates and the speed of the ball
 let circleXPos = 200;
 let circleYPos = 475;
 let circleRadius = 8;
-let circleSpeedX = 6;
-let circleSpeedY = 6;
+let circleSpeedX = 4;
+let circleSpeedY = 4;
 
 // Declaration of the variables of the blocks
-let blockColumns = 12
+let blockColumns = 17;
 let blockRows = 6
-let blockGap = 40
-let blockWidth = 40;
-let blockHeight = 30;
+let blockGap = 30
+let blockWidth = 30;
+let blockHeight = 20;
 let blockOffsetTop = 50;
-let blockOffsetLeft = 30;
+let blockOffsetLeft = 0;
 
 var blocks = [];
 
@@ -52,7 +82,7 @@ var nb_blocks = blockRows* blockColumns;
 for (let i = 0;i<blockColumns;i++) {
     blocks[i] = [];
     for (let j = 0;j< blockRows;j++) {
-        blocks[i][j] = {x:0,y:0,touched:false};
+        blocks[i][j] = {x:0,y:0,touched:false,color:COLORS[0]};
     }
 }
 
@@ -121,14 +151,15 @@ function drawCircle(xPos,yPos,radius,startingAngle,endingAngle) {
 function drawAllBlocks() {
     for (var i=0;i<blockColumns;i++) {
         for (var j=0;j<blockRows;j++) {
+            context.fillStyle = COLORS[j]; // Math.floor(Math.random() * 6)
+            blocks[i][j].color = context.fillStyle;
             var blockX = (i*(blockRows+blockGap))+ blockOffsetLeft;
-            var blockY = (j*(blockColumns+blockGap))+ blockOffsetTop;
+            var blockY = (j*(blockColumns+10))+ blockOffsetTop;
             if (blocks[i][j].touched === false) {
                 blocks[i][j].x = blockX;
                 blocks[i][j].y = blockY;
                 context.beginPath();
                 context.rect(blockX, blockY, blockWidth, blockHeight);
-                context.fillStyle = GREEN;
                 context.fill();
                 context.closePath();
             }
@@ -175,23 +206,9 @@ function checkWallCollision() {
 // Check if the ball hit the cursor
 function checkPlayerCollision() {
     
-    if (playerXpos < circleXPos + circleRadius &&
-        playerXpos + WIDTH_PLAYER > circleXPos &&
-        initialPlayerYpos < circleYPos + circleRadius &&
-        HEIGHT_PLAYER + initialPlayerYpos > circleYPos && playerCollision === true){
+    if (playerXpos < circleXPos + circleRadius && playerXpos + WIDTH_PLAYER > circleXPos && initialPlayerYpos < circleYPos + circleRadius && HEIGHT_PLAYER + initialPlayerYpos > circleYPos && playerCollision === true){
             circleSpeedY = -circleSpeedY;
             circleSpeedX = -circleSpeedX;
-            playerCollision = false;
-            console.log(0);
-        }
-        else if (playerXpos < circleXPos + circleRadius &&
-        playerXpos + WIDTH_PLAYER > circleXPos &&
-        initialPlayerYpos < circleYPos + circleRadius &&
-        HEIGHT_PLAYER + initialPlayerYpos > circleYPos && playerCollision === false){
-            circleSpeedY = -circleSpeedY;
-            circleSpeedX = circleSpeedX;
-            playerCollision = true;
-            console.log("touché");
         }
     }
     
@@ -227,6 +244,7 @@ function checkAllCollision() {
 ////////// DEPLACEMENT FUNCTIONS  //////////
 function movePlayer(speed) {
     playerXpos = playerXpos - speed;
+    playerCenter = playerCenter - speed;
 }
 
 function moveCircle(speedX, speedY) {
@@ -248,19 +266,22 @@ document.onkeydown = function(e) {
                 document.location.reload();
                 clearInterval(interval);
             }
-            else {
-                playerXpos = 0;
-                WIDTH_PLAYER = canvas.width;
-                // let data_display = document.querySelector(".data_display");
-                // data_content = document.createTextNode(blocks[11][6].x);
-                // data_display.appendChild(data_content);
-            }
+            // else {
+            //     playerXpos = 0;
+            //     WIDTH_PLAYER = canvas.width;
+            //     // let data_display = document.querySelector(".data_display");
+            //     // data_content = document.createTextNode(blocks[11][6].x);
+            //     // data_display.appendChild(data_content);
+            // }
             break;
 
     // Keyboard keys for changing the direction of the player
         //Left arrow
         case 37:
-            movePlayer(30);
+            arrowLeft = true;
+            if (arrowLeft === true) {
+                movePlayer(30);
+            }
             if (playerXpos < 0) {
                 playerXpos = 0;
             }
@@ -270,10 +291,26 @@ document.onkeydown = function(e) {
             break;
         //Right arrow
         case 39:
-            movePlayer(-30);
+            arrowRight = true;
+            if (arrowRight === true) {
+                movePlayer(-30);
+            }
             if (playerXpos +  WIDTH_PLAYER > canvas.width) {
                 playerXpos = canvas.width - WIDTH_PLAYER;
             }
+            break;
+    }
+};
+
+document.onkeyup = function(e) {
+    switch (e.keyCode) {
+        //Left arrow
+        case 37:
+            arrowLeft = false;
+            break;
+        //Right arrow
+        case 39:
+            arrowRight = false;
             break;
     }
 };
