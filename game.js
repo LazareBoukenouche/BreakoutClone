@@ -15,45 +15,27 @@ const COLORS = [RED,ORANGE,REDORANGE,YELLOW,YELLOWGREEN,GREEN];
 
 let lives = 3;
 
-function sound(src) {
-    this.sound = document.createElement("audio");
-    this.sound.src = src;
-    this.sound.setAttribute("preload", "auto");
-    this.sound.setAttribute("controls", "none");
-    this.sound.style.display = "none";
-    document.body.appendChild(this.sound);
-    this.play = function(){
-      this.sound.play();
-    }
-    this.stop = function(){
-      this.sound.pause();
-    }
-  }
-
-// how to play sound
-// var music;
-// music = new sound("/static/sound/music.mp3");
-// music.play();
-// music.stop();
-
 // Create the canvas window, where the game will be played.
 let canvas = document.getElementById('canvas');
 let context = canvas.getContext('2d');
 let startingCount = 1;
 let timeInterval = 10;
 
+// Create game state variables
 let game_over = false;
-
 let game_is_paused = false;
+let restart = false;
+let score = 0;
 
 // Declaration of the width and height of the player
 const HEIGHT_PLAYER = canvas.height/40;
-var WIDTH_PLAYER = canvas.width/5;
-
+const WIDTH_PLAYER = canvas.width/5;
 
 // Declaration of the coordinates and the speed of the player
-let initialPlayerYpos = 550;
-let playerXPos = 240;
+const initialPlayerYpos = 550;
+let playerYPos = initialPlayerYpos;
+const initialPlayerXpos = 240;
+let playerXPos = initialPlayerXpos;
 let playerSpeed = -20;
 let playerCollision = true;
 let playerCenter = playerXPos + WIDTH_PLAYER/2;
@@ -65,8 +47,8 @@ let arrowLeft = false;
 let arrowRight = false;
 
 // Declaration of the coordinates and the speed of the ball
-let circleXPos = 240;
-let circleYPos = 550;
+let circleXPos = initialPlayerXpos;
+let circleYPos = initialPlayerYpos;
 let circleRadius = 8;
 let circleSpeedX = 4;
 let circleSpeedY = 4;
@@ -84,18 +66,9 @@ let blockHeight = 20;
 let blockOffsetTop = 50;
 let blockOffsetLeft = 0;
 
-var blocks = [];
-
-var score = 0;
-var nb_blocks = blockRows* blockColumns;
-// Creating the coordinates of the blocks and putting them in a 2D array
-for (let i = 0;i<blockColumns;i++) {
-    blocks[i] = [];
-    for (let j = 0;j< blockRows;j++) {
-        blocks[i][j] = {x:0,y:0,touched:false,color:COLORS[0]};
-    }
-}
-
+let blocks = [];
+let nb_blocks = blockRows* blockColumns;
+let interval = 1;
 // Main Game loop, with an interval of time implemented with a setTimeout function
 function main() {
     startingCount = 0;
@@ -105,10 +78,56 @@ function main() {
     movePlayer();
     moveCircle(circleSpeedX, circleSpeedY);
     display_game_informations();
+    pausing_game();
     if (!game_over) {
     	requestAnimationFrame(main);
     	}
+    reset_game();
   }
+
+function pausing_game() {
+    if (game_is_paused == true) {
+        write("PAUSE",60,canvas.width/3,canvas.height/2);
+    }
+}
+function reset_game() {
+    if (game_over) {
+        if (restart) {
+                document.location.reload();
+                clearInterval(interval);
+        }
+    }
+}
+
+function sound(src) {
+// how to play sound
+// var music;
+// music = new sound("/static/sound/music.mp3");
+// music.play();
+// music.stop();
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
+    this.play = function(){
+      this.sound.play();
+    }
+    this.stop = function(){
+      this.sound.pause();
+    }
+  }
+
+// Creating the coordinates of the blocks and putting them in a 2D array
+function create_blocks() {
+    for (let i = 0;i<blockColumns;i++) {
+        blocks[i] = [];
+        for (let j = 0;j< blockRows;j++) {
+            blocks[i][j] = {x:0,y:0,touched:false,color:COLORS[0]};
+        }
+    }
+}
 
 // Display the menu on the canvas, pressing X will start the game
 function menu() {
@@ -143,8 +162,6 @@ function setColors(colorBorder,colorFull){
     context.strokeStyle = colorBorder;
     context.fillStyle = colorFull;
     }
-
-////////// DRAWING FUNCTIONS  //////////
 
 // Draw the player cursor
 function drawRect(coordX,coordY,width,height){
@@ -187,9 +204,6 @@ function drawAllGameElements() {
     drawRect(playerXPos,initialPlayerYpos,WIDTH_PLAYER,HEIGHT_PLAYER);
     drawCircle(circleXPos,circleYPos,circleRadius,0,2*Math.PI);
 }
-////////// END DRAWING FUNCTIONS  //////////
-
-////////// COLLISION FUNCTIONS  //////////
 
 // Check if the ball hit a wall
 function checkWallCollision() {
@@ -216,12 +230,8 @@ function checkWallCollision() {
     }
     // Si la balle touche le bord bas
     if (circleYPos > canvas.height - circleRadius) {
-        circleYPos = canvas.height- circleRadius;
-        circleSpeedX = 0;
-        actualCircleSpeedX = circleSpeedX;
-        actualCircleSpeedY = circleSpeedY;
         game_over = true;
-
+        restart = true;
     }
 }
 
@@ -273,9 +283,6 @@ function checkAllCollision() {
     checkPlayerCollision();
 }
 
-////////// END COLLISION FUNCTIONS  //////////
-
-////////// DEPLACEMENT FUNCTIONS  //////////
 function movePlayer() {
     if (arrowRight && playerXPos + WIDTH_PLAYER < canvas.width) {
     	playerXPos += speed;
@@ -290,7 +297,6 @@ function moveCircle(speedX, speedY) {
     circleYPos += speedY;
 
 }
-////////// END DEPLACEMENT FUNCTIONS  //////////
 
 document.getElementById("canvas").addEventListener("click", function( event ) {
     main();
@@ -333,22 +339,27 @@ document.onkeydown = function(e) {
 document.onkeyup = function(e) {
     switch (e.keyCode) {
         // Press Enter for starting the game
+
         case 13:
             // If the game has not started, launch it
-            if (startingCount != 0) {
+            if (startingCount != 0 && game_over == false) {
                 main();
             }
             // If the game started and isn't stopped, stop it
-            else if (startingCount === 0 && game_is_paused == false) {
+            else if (startingCount === 0 && game_is_paused == false && game_over == false) {
                     circleSpeedX = 0;
                     circleSpeedY = 0;
                     game_is_paused = true;
 
             }
-            else if (startingCount === 0 && game_is_paused == true){
+            else if (startingCount === 0 && game_is_paused == true && game_over == false){
                 circleSpeedY = actualCircleSpeedY;
                 circleSpeedX = actualCircleSpeedX;
                 game_is_paused = false;
+            }
+
+            else if (game_over == false) {
+             restart = true;
             }
             break;
         // Press Space for starting the game
@@ -382,4 +393,5 @@ document.onkeyup = function(e) {
 };
 
 // Launch the game
-menu()
+create_blocks();
+main();
