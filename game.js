@@ -1,4 +1,4 @@
-// Colors constantes declaration
+// Colors constants declaration
 
 const TOP = 0;
 const LEFT = 0;
@@ -12,6 +12,8 @@ const YELLOWGREEN = "#AAFF00";
 const REDORANGE = "#FFAA00";
 const ORANGE = "#FF7000";
 const COLORS = [RED,ORANGE,REDORANGE,YELLOW,YELLOWGREEN,GREEN];
+
+let lives = 3;
 
 function sound(src) {
     this.sound = document.createElement("audio");
@@ -42,6 +44,8 @@ let timeInterval = 10;
 
 let game_over = false;
 
+let game_is_paused = false;
+
 // Declaration of the width and height of the player
 const HEIGHT_PLAYER = canvas.height/40;
 var WIDTH_PLAYER = canvas.width/5;
@@ -61,12 +65,15 @@ let arrowLeft = false;
 let arrowRight = false;
 
 // Declaration of the coordinates and the speed of the ball
-let circleXPos = 200;
-let circleYPos = 475;
+let circleXPos = 240;
+let circleYPos = 550;
 let circleRadius = 8;
 let circleSpeedX = 4;
 let circleSpeedY = 4;
 let circleSpeed = 4;
+
+let actualCircleSpeedX = circleSpeedX;
+let actualCircleSpeedY = circleSpeedY;
 
 // Declaration of the variables of the blocks
 let blockColumns = 17;
@@ -91,18 +98,13 @@ for (let i = 0;i<blockColumns;i++) {
 
 // Main Game loop, with an interval of time implemented with a setTimeout function
 function main() {
-    write('Score  : '+ score.toString(10),canvas.width/3,canvas.height/15);
-    write('Briques  : '+ nb_blocks.toString(10),canvas.width/1.6,canvas.height/15);
     startingCount = 0;
-	// setTimeout(function onTick(timeInterval) {
     clearCanvas(LEFT,TOP,canvas.width,canvas.height);
-    checkAllCollision();
     drawAllGameElements();
+    checkAllCollision();
     movePlayer();
     moveCircle(circleSpeedX, circleSpeedY);
-    // Call main again
-    // main();
-    // }, timeInterval)
+    display_game_informations();
     if (!game_over) {
     	requestAnimationFrame(main);
     	}
@@ -113,15 +115,21 @@ function menu() {
     setColors(BLACK,WHITE);
     drawRect(LEFT,TOP,canvas.width,canvas.height);
     drawRect(canvas.width/4, canvas.height/5, 350,200);
-    write('Click',canvas.width/3,canvas.height/2);
-    write('for starting Breakout',canvas.width/3.7, canvas.height/1.6);
+    write('Press Space or Enter',30,canvas.width/3,canvas.height/2);
+    write('to start the game',30,canvas.width/2, canvas.height/1.6);
 }
 
 // Function used for writing messages on the screen menu
-function write(text,x,y) {
-    context.font = '30px serif';
+function write(text,font_size,x,y) {
+    context.font = font_size.toString(10)+'px serif';
     setColors(BLACK, BLACK);
     context.fillText(text, x, y);
+}
+
+function display_game_informations() {
+    write('Score  : '+ score.toString(10),20,canvas.width - 100,canvas.height/15);
+    write('Lives  : '+ lives,20,canvas.width - canvas.width+10 ,canvas.height/15);
+    write('Pause  : Space or Enter ',20,canvas.width - canvas.width+160 ,canvas.height/15);
 }
 
 // This function "clean" the canvas by drawing a white rectangle on the canvas.
@@ -184,41 +192,52 @@ function drawAllGameElements() {
 ////////// COLLISION FUNCTIONS  //////////
 
 // Check if the ball hit a wall
-
 function checkWallCollision() {
     // Si la balle touche le bord gauche
     if (circleXPos < 0) {
         circleXPos = 0
         circleSpeedX = -circleSpeedX;
+        actualCircleSpeedX = circleSpeedX;
+        actualCircleSpeedY = circleSpeedY;
     }
     // Si la balle touche le bord droit
     if (circleXPos - circleRadius > canvas.width) {
         circleXPos = canvas.width - circleRadius;
         circleSpeedX = -circleSpeedX;
+        actualCircleSpeedX = circleSpeedX;
+        actualCircleSpeedY = circleSpeedY;
     }
     // Si la balle touche le bord haut
     if (circleYPos < 0) {
         circleYPos = 0;
         circleSpeedY = - circleSpeedY;
+        actualCircleSpeedX = circleSpeedX;
+        actualCircleSpeedY = circleSpeedY;
     }
     // Si la balle touche le bord bas
     if (circleYPos > canvas.height - circleRadius) {
         circleYPos = canvas.height- circleRadius;
         circleSpeedX = 0;
+        actualCircleSpeedX = circleSpeedX;
+        actualCircleSpeedY = circleSpeedY;
         game_over = true;
+
     }
 }
 
 // Check if the ball hit the cursor
 function checkPlayerCollision() {
     
-    if (circleYPos > initialPlayerYpos && circleYPos < initialPlayerYpos + HEIGHT_PLAYER && circleXPos > playerXPos && circleXPos < playerXPos + WIDTH_PLAYER){
+    if (circleYPos > initialPlayerYpos && circleYPos < initialPlayerYpos + HEIGHT_PLAYER && circleXPos >
+    playerXPos && circleXPos < playerXPos + WIDTH_PLAYER){
     
     let collidePoint = circleXPos - (playerXPos + WIDTH_PLAYER/2);
     collidePoint = collidePoint / (WIDTH_PLAYER/2);
     let angle = collidePoint * (Math.PI/3);
     circleSpeedX = circleSpeed * Math.sin(angle);
     circleSpeedY = - circleSpeed * Math.cos(angle);
+    actualCircleSpeedX = circleSpeedX;
+    actualCircleSpeedY = circleSpeedY;
         }
     }
     
@@ -229,10 +248,12 @@ function checkBlockCollision() {
             if (blocks[c][r].touched === false) {
                 if (circleYPos > blocks[c][r].y && circleYPos < blocks[c][r].y + blockHeight && circleXPos > blocks[c][r].x && circleXPos < blocks[c][r].x + blockWidth) {
                     let collidePoint = circleXPos - (playerXPos + WIDTH_PLAYER/2);
-		    collidePoint = collidePoint / (WIDTH_PLAYER/2);
-		    let angle = collidePoint * (Math.PI/3);
-		    circleSpeedX = circleSpeed * Math.sin(angle);
-		    circleSpeedY = - circleSpeedY;
+                    collidePoint = collidePoint / (WIDTH_PLAYER/2);
+                    let angle = collidePoint * (Math.PI/3);
+                    circleSpeedX = circleSpeed * Math.sin(angle);
+                    circleSpeedY = - circleSpeedY;
+                    actualCircleSpeedX = circleSpeedX;
+                    actualCircleSpeedY = circleSpeedY;
                     blocks[c][r].touched = true;
                     score+=1;
                     nb_blocks-=1;
@@ -245,8 +266,7 @@ function checkBlockCollision() {
     }
 }
 
-
-// Regroup all the collison functions under this one
+// Regroup all the collisions functions under this one
 function checkAllCollision() {
     checkWallCollision();
     checkBlockCollision();
@@ -268,6 +288,7 @@ function movePlayer() {
 function moveCircle(speedX, speedY) {
     circleXPos += speedX;
     circleYPos += speedY;
+
 }
 ////////// END DEPLACEMENT FUNCTIONS  //////////
 
@@ -278,32 +299,30 @@ document.getElementById("canvas").addEventListener("click", function( event ) {
 // Creating keyboard events with the Char codes of the keyboard
 document.onkeydown = function(e) {
     switch (e.keyCode) {
-        // Pressing X for displaying infos
+        // Pressing X for resetting the game
         case 88:
             if (game_over == true) {
                 document.location.reload();
                 clearInterval(interval);
             }
-            // else {
-            //     playerXpos = 0;
-            //     WIDTH_PLAYER = canvas.width;
-            //     // let data_display = document.querySelector(".data_display");
-            //     // data_content = document.createTextNode(blocks[11][6].x);
-            //     // data_display.appendChild(data_content);
-            // }
             break;
 
     // Keyboard keys for changing the direction of the player
         //Left arrow
         case 37:
-            arrowLeft = true;
+            if (game_is_paused === false) {
+                arrowLeft = true;
+            }
+
             if (playerXPos < 0) {
                 playerXPos = 0;
             }
             break;
         //Right arrow
         case 39:
-            arrowRight = true;
+            if (game_is_paused === false) {
+                arrowRight = true;
+            }
             if (playerXPos +  WIDTH_PLAYER > canvas.width) {
                 playerXPos = canvas.width - WIDTH_PLAYER;
             }
@@ -313,6 +332,44 @@ document.onkeydown = function(e) {
 
 document.onkeyup = function(e) {
     switch (e.keyCode) {
+        // Press Enter for starting the game
+        case 13:
+            // If the game has not started, launch it
+            if (startingCount != 0) {
+                main();
+            }
+            // If the game started and isn't stopped, stop it
+            else if (startingCount === 0 && game_is_paused == false) {
+                    circleSpeedX = 0;
+                    circleSpeedY = 0;
+                    game_is_paused = true;
+
+            }
+            else if (startingCount === 0 && game_is_paused == true){
+                circleSpeedY = actualCircleSpeedY;
+                circleSpeedX = actualCircleSpeedX;
+                game_is_paused = false;
+            }
+            break;
+        // Press Space for starting the game
+        case 32:
+             // If the game has not started, launch it
+            if (startingCount != 0) {
+                main();
+            }
+            // If the game started and isn't stopped, stop it
+            else if (startingCount === 0 && game_is_paused == false) {
+                    circleSpeedX = 0;
+                    circleSpeedY = 0;
+                    game_is_paused = true;
+
+            }
+            else if (startingCount === 0 && game_is_paused == true){
+                circleSpeedY = actualCircleSpeedY;
+                circleSpeedX = actualCircleSpeedX;
+                game_is_paused = false;
+            }
+            break;
         //Left arrow
         case 37:
             arrowLeft = false;
