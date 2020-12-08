@@ -1,0 +1,49 @@
+:root {
+    --primary-color:#4eb1ba;;
+}
+canvas {
+border:2px solid black;
+}
+canvas,#main {
+    margin-left: 30vw;
+    margin-top:10vh;
+
+}
+
+#main {
+  display: flex;
+  flex-direction:column;
+  overflow: auto;
+
+  position: absolute;
+
+}
+
+#main h1 {
+  color: var(--primary-color);
+  margin-left:5vw;
+  margin-top:10vh;
+  text-align:center;
+}
+
+#main ul {
+    margin-left:5vw;
+}
+
+#main ul li {
+    list-style-type:none;
+    margin:2vw;
+
+}
+
+#main ul li a ,#main ul li button{
+    width:15vw;
+}
+
+#main ul.games-links {
+    display:flex;
+}
+
+#main ul.games-links li a {
+    width:5vw;
+}

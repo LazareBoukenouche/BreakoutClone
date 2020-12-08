@@ -68,7 +68,16 @@ let blockOffsetLeft = 0;
 
 let blocks = [];
 let nb_blocks = blockRows* blockColumns;
+
 let interval = 1;
+
+document.querySelectorAll('.play')[0].addEventListener('click', function() {
+    if (startingCount != 0) {
+        main();
+        document.querySelector("#main").style.display = 'none';
+        }
+});
+
 // Main Game loop, with an interval of time implemented with a setTimeout function
 function main() {
     startingCount = 0;
@@ -90,6 +99,7 @@ function pausing_game() {
         write("PAUSE",60,canvas.width/3,canvas.height/2);
     }
 }
+
 function reset_game() {
     if (game_over) {
         if (restart) {
@@ -237,10 +247,10 @@ function checkWallCollision() {
 
 // Check if the ball hit the cursor
 function checkPlayerCollision() {
-    
+
     if (circleYPos > initialPlayerYpos && circleYPos < initialPlayerYpos + HEIGHT_PLAYER && circleXPos >
     playerXPos && circleXPos < playerXPos + WIDTH_PLAYER){
-    
+
     let collidePoint = circleXPos - (playerXPos + WIDTH_PLAYER/2);
     collidePoint = collidePoint / (WIDTH_PLAYER/2);
     let angle = collidePoint * (Math.PI/3);
@@ -250,7 +260,7 @@ function checkPlayerCollision() {
     actualCircleSpeedY = circleSpeedY;
         }
     }
-    
+
 // Check if the ball hit on of the blocks
 function checkBlockCollision() {
     for (var c = 0; c < blockColumns; c++){
@@ -394,4 +404,3 @@ document.onkeyup = function(e) {
 
 // Launch the game
 create_blocks();
-main();
